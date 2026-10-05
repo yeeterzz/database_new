@@ -1,0 +1,531 @@
+USE [master]
+GO
+/****** Объект:  Database [КабинетПсихолога]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE DATABASE [КабинетПсихолога]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'КабинетПсихолога', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL15.YEETER\MSSQL\DATA\КабинетПсихолога.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+ LOG ON 
+( NAME = N'КабинетПсихолога_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL15.YEETER\MSSQL\DATA\КабинетПсихолога_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+ WITH CATALOG_COLLATION = DATABASE_DEFAULT
+GO
+ALTER DATABASE [КабинетПсихолога] SET COMPATIBILITY_LEVEL = 150
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [КабинетПсихолога].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [КабинетПсихолога] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET AUTO_CLOSE ON 
+GO
+ALTER DATABASE [КабинетПсихолога] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [КабинетПсихолога] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [КабинетПсихолога] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET  DISABLE_BROKER 
+GO
+ALTER DATABASE [КабинетПсихолога] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [КабинетПсихолога] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET RECOVERY FULL 
+GO
+ALTER DATABASE [КабинетПсихолога] SET  MULTI_USER 
+GO
+ALTER DATABASE [КабинетПсихолога] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [КабинетПсихолога] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [КабинетПсихолога] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [КабинетПсихолога] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [КабинетПсихолога] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [КабинетПсихолога] SET ACCELERATED_DATABASE_RECOVERY = OFF  
+GO
+EXEC sys.sp_db_vardecimal_storage_format N'КабинетПсихолога', N'ON'
+GO
+ALTER DATABASE [КабинетПсихолога] SET QUERY_STORE = OFF
+GO
+USE [КабинетПсихолога]
+GO
+/****** Объект:  User [Worker]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE USER [Worker] FOR LOGIN [PsyOffice_Worker] WITH DEFAULT_SCHEMA=[dbo]
+GO
+/****** Объект:  User [PsyUser]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE USER [PsyUser] FOR LOGIN [PsyUser] WITH DEFAULT_SCHEMA=[dbo]
+GO
+/****** Объект:  User [Psychologist]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE USER [Psychologist] FOR LOGIN [PsyOffice_Psychologist] WITH DEFAULT_SCHEMA=[dbo]
+GO
+/****** Объект:  User [AdminUser]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE USER [AdminUser] FOR LOGIN [AdminUser] WITH DEFAULT_SCHEMA=[dbo]
+GO
+/****** Объект:  DatabaseRole [role_psychologist]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE ROLE [role_psychologist]
+GO
+/****** Объект:  DatabaseRole [role_admin]    Дата создания скрипта: 05.10.2026 23:54:32 ******/ 
+CREATE ROLE [role_admin]
+GO
+ALTER ROLE [role_psychologist] ADD MEMBER [PsyUser]
+GO
+ALTER ROLE [role_admin] ADD MEMBER [AdminUser]
+GO
+/****** Объект:  Table [dbo].[Клиенты]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Клиенты](
+	[КлиентID] [int] IDENTITY(1,1) NOT NULL,
+	[ФИО] [nvarchar](150) NOT NULL,
+	[ДатаРождения] [date] NOT NULL,
+	[Телефон] [nvarchar](20) NOT NULL,
+	[Email] [nvarchar](100) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[КлиентID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Психологи]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Психологи](
+	[ПсихологID] [int] IDENTITY(1,1) NOT NULL,
+	[ФИО] [nvarchar](150) NOT NULL,
+	[СпециализацияID] [int] NOT NULL,
+	[СтажЛет] [int] NOT NULL,
+	[СтоимостьПриема] [money] NOT NULL,
+	[Телефон] [nvarchar](20) NULL,
+	[Email] [nvarchar](100) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ПсихологID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Сессии]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Сессии](
+	[СессияID] [int] IDENTITY(1,1) NOT NULL,
+	[ПсихологID] [int] NOT NULL,
+	[КлиентID] [int] NOT NULL,
+	[УслугаID] [int] NOT NULL,
+	[ДатаВремяСессии] [datetime2](7) NOT NULL,
+	[СтатусОплаты] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[СессияID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Услуги]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Услуги](
+	[УслугаID] [int] IDENTITY(1,1) NOT NULL,
+	[Наименование] [nvarchar](100) NOT NULL,
+	[КатегорияID] [int] NOT NULL,
+	[ДлительностьМин] [int] NOT NULL,
+	[Описание] [nvarchar](max) NULL,
+	[Стоимость] [money] NULL,
+	[ФорматID] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[УслугаID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Объект:  View [dbo].[vw_РасписаниеСессий]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   VIEW [dbo].[vw_РасписаниеСессий] AS
+SELECT 
+  s.СессияID,
+  p.ФИО        AS Психолог,
+  c.ФИО        AS Клиент,
+  u.Наименование AS Услуга,
+  s.ДатаВремяСессии,
+  s.СтатусОплаты
+FROM dbo.Сессии s
+JOIN dbo.Психологи p ON s.ПсихологID = p.ПсихологID
+JOIN dbo.Клиенты   c ON s.КлиентID   = c.КлиентID
+LEFT JOIN dbo.Услуги u ON s.УслугаID = u.УслугаID;
+
+GO
+/****** Объект:  Table [dbo].[КатегорииПроблем]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[КатегорииПроблем](
+	[КатегорияID] [int] IDENTITY(1,1) NOT NULL,
+	[Наименование] [nvarchar](100) NOT NULL,
+	[Описание] [nvarchar](max) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[КатегорияID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[Наименование] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[Наименование] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Форматы]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Форматы](
+	[ФорматID] [int] IDENTITY(1,1) NOT NULL,
+	[Наименование] [nvarchar](100) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ФорматID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Объект:  View [dbo].[Представление_Сессии]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+-- ======================================================================
+-- 5. Представления
+-- ======================================================================
+-- Представление 1: на основании таблиц базы данных
+CREATE VIEW [dbo].[Представление_Сессии]
+AS
+SELECT s.СессияID,
+       k.ФИО             AS Клиент,
+       p.ФИО             AS Психолог,
+       u.Наименование    AS Услуга,
+       kp.Наименование   AS Категория,
+       f.Наименование    AS Формат,
+       s.ДатаВремяСессии,
+       u.Стоимость,
+       s.СтатусОплаты
+FROM Сессии AS s
+     JOIN Клиенты          AS k  ON k.КлиентID     = s.КлиентID
+     JOIN Психологи        AS p  ON p.ПсихологID   = s.ПсихологID
+     JOIN Услуги           AS u  ON u.УслугаID     = s.УслугаID
+     JOIN КатегорииПроблем AS kp ON kp.КатегорияID = u.КатегорияID
+     JOIN Форматы          AS f  ON f.ФорматID     = u.ФорматID;
+
+GO
+/****** Объект:  View [dbo].[Представление_ДолгиКлиентов]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   VIEW [dbo].[Представление_ДолгиКлиентов] AS
+SELECT
+  c.КлиентID,
+  c.ФИО,
+  COUNT(s.СессияID) AS НеоплаченныхСессий,
+  SUM(COALESCE(u.Стоимость, p.СтоимостьПриема, 0)) AS СуммаДолга
+FROM dbo.Сессии s
+JOIN dbo.Клиенты c ON s.КлиентID = c.КлиентID
+LEFT JOIN dbo.Услуги u ON s.УслугаID = u.УслугаID
+LEFT JOIN dbo.Психологи p ON s.ПсихологID = p.ПсихологID
+WHERE s.СтатусОплаты = 0
+GROUP BY c.КлиентID, c.ФИО;
+
+GO
+/****** Объект:  Table [dbo].[Специализации]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Специализации](
+	[СпециализацияID] [int] IDENTITY(1,1) NOT NULL,
+	[Наименование] [nvarchar](100) NOT NULL,
+	[Описание] [nvarchar](max) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[СпециализацияID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[Наименование] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[Наименование] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Объект:  View [dbo].[vw_ЗагруженностьПсихологов]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Представление 1 (рисунок 14). Загруженность психологов
+CREATE VIEW [dbo].[vw_ЗагруженностьПсихологов]
+AS
+SELECT p.ПсихологID,
+       p.ФИО,
+       sp.Наименование AS Специализация,
+       COUNT(s.СессияID) AS ВсегоСессий,
+       SUM(CASE WHEN s.СтатусОплаты = 1 THEN 1 ELSE 0 END) AS Оплачено,
+       SUM(CASE WHEN s.СтатусОплаты = 0 THEN 1 ELSE 0 END) AS НеОплачено,
+       MAX(s.ДатаВремяСессии) AS ПоследняяСессия
+FROM Психологи p
+     JOIN Специализации sp ON sp.СпециализацияID = p.СпециализацияID
+     LEFT JOIN Сессии s ON s.ПсихологID = p.ПсихологID
+GROUP BY p.ПсихологID, p.ФИО, sp.Наименование;
+GO
+/****** Объект:  View [dbo].[vw_СводкаПоКлиентам]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Представление 2 (рисунок 15). Сводка по клиентам
+CREATE VIEW [dbo].[vw_СводкаПоКлиентам]
+AS
+SELECT k.КлиентID,
+       k.ФИО,
+       COUNT(s.СессияID) AS ВсегоСессий,
+       SUM(CASE WHEN s.СтатусОплаты = 0 THEN 1 ELSE 0 END) AS НеоплаченныхСессий,
+       MAX(s.ДатаВремяСессии) AS ПоследняяСессия
+FROM Клиенты k
+     LEFT JOIN Сессии s ON s.КлиентID = k.КлиентID
+GROUP BY k.КлиентID, k.ФИО;
+GO
+/****** Объект:  Table [dbo].[АудитСессий]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[АудитСессий](
+	[АудитID] [int] IDENTITY(1,1) NOT NULL,
+	[Операция] [nvarchar](10) NOT NULL,
+	[СессияID] [int] NOT NULL,
+	[СтарыйСтатус] [nvarchar](20) NULL,
+	[НовыйСтатус] [nvarchar](20) NULL,
+	[СтараяДатаВремя] [datetime2](0) NULL,
+	[НоваяДатаВремя] [datetime2](0) NULL,
+	[Пользователь] [nvarchar](128) NOT NULL,
+	[ДатаВремяОперации] [datetime2](0) NOT NULL,
+ CONSTRAINT [PK_АудитСессий] PRIMARY KEY CLUSTERED 
+(
+	[АудитID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Оплаты]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Оплаты](
+	[ПлатежID] [int] IDENTITY(1,1) NOT NULL,
+	[СессияID] [int] NOT NULL,
+	[Сумма] [money] NOT NULL,
+	[ДатаПлатежа] [datetime2](7) NOT NULL,
+	[Метод] [nvarchar](50) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ПлатежID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Отзывы]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Отзывы](
+	[ОтзывID] [int] IDENTITY(1,1) NOT NULL,
+	[КлиентID] [int] NOT NULL,
+	[ПсихологID] [int] NOT NULL,
+	[УслугаID] [int] NULL,
+	[Оценка] [tinyint] NOT NULL,
+	[Текст] [nvarchar](max) NULL,
+	[Дата] [datetime2](7) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ОтзывID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Объект:  Table [dbo].[Пользователи]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Пользователи](
+	[ПользовательID] [int] IDENTITY(1,1) NOT NULL,
+	[Логин] [nvarchar](100) NOT NULL,
+	[ХешПароля] [nvarchar](256) NULL,
+	[Роль] [nvarchar](50) NOT NULL,
+	[КлиентID] [int] NULL,
+	[ПсихологID] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ПользовательID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[Логин] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+GO
+/****** Объект:  Index [UQ_Форматы_Наименование]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_Форматы_Наименование] ON [dbo].[Форматы]
+(
+	[Наименование] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[АудитСессий] ADD  CONSTRAINT [DF_АудитСессий_Пользователь]  DEFAULT (suser_sname()) FOR [Пользователь]
+GO
+ALTER TABLE [dbo].[АудитСессий] ADD  CONSTRAINT [DF_АудитСессий_ДатаВремя]  DEFAULT (sysdatetime()) FOR [ДатаВремяОперации]
+GO
+ALTER TABLE [dbo].[Оплаты] ADD  DEFAULT (sysutcdatetime()) FOR [ДатаПлатежа]
+GO
+ALTER TABLE [dbo].[Отзывы] ADD  DEFAULT (sysutcdatetime()) FOR [Дата]
+GO
+ALTER TABLE [dbo].[Сессии] ADD  DEFAULT ((0)) FOR [СтатусОплаты]
+GO
+ALTER TABLE [dbo].[Оплаты]  WITH CHECK ADD  CONSTRAINT [FK_Оплаты_Сессии] FOREIGN KEY([СессияID])
+REFERENCES [dbo].[Сессии] ([СессияID])
+GO
+ALTER TABLE [dbo].[Оплаты] CHECK CONSTRAINT [FK_Оплаты_Сессии]
+GO
+ALTER TABLE [dbo].[Отзывы]  WITH CHECK ADD  CONSTRAINT [FK_Отзывы_Клиенты] FOREIGN KEY([КлиентID])
+REFERENCES [dbo].[Клиенты] ([КлиентID])
+GO
+ALTER TABLE [dbo].[Отзывы] CHECK CONSTRAINT [FK_Отзывы_Клиенты]
+GO
+ALTER TABLE [dbo].[Отзывы]  WITH CHECK ADD  CONSTRAINT [FK_Отзывы_Психологи] FOREIGN KEY([ПсихологID])
+REFERENCES [dbo].[Психологи] ([ПсихологID])
+GO
+ALTER TABLE [dbo].[Отзывы] CHECK CONSTRAINT [FK_Отзывы_Психологи]
+GO
+ALTER TABLE [dbo].[Отзывы]  WITH CHECK ADD  CONSTRAINT [FK_Отзывы_Услуги] FOREIGN KEY([УслугаID])
+REFERENCES [dbo].[Услуги] ([УслугаID])
+GO
+ALTER TABLE [dbo].[Отзывы] CHECK CONSTRAINT [FK_Отзывы_Услуги]
+GO
+ALTER TABLE [dbo].[Пользователи]  WITH CHECK ADD  CONSTRAINT [FK_Пользователи_Клиенты] FOREIGN KEY([КлиентID])
+REFERENCES [dbo].[Клиенты] ([КлиентID])
+GO
+ALTER TABLE [dbo].[Пользователи] CHECK CONSTRAINT [FK_Пользователи_Клиенты]
+GO
+ALTER TABLE [dbo].[Пользователи]  WITH CHECK ADD  CONSTRAINT [FK_Пользователи_Психологи] FOREIGN KEY([ПсихологID])
+REFERENCES [dbo].[Психологи] ([ПсихологID])
+GO
+ALTER TABLE [dbo].[Пользователи] CHECK CONSTRAINT [FK_Пользователи_Психологи]
+GO
+ALTER TABLE [dbo].[Психологи]  WITH CHECK ADD  CONSTRAINT [FK_Психологи_Специализации] FOREIGN KEY([СпециализацияID])
+REFERENCES [dbo].[Специализации] ([СпециализацияID])
+GO
+ALTER TABLE [dbo].[Психологи] CHECK CONSTRAINT [FK_Психологи_Специализации]
+GO
+ALTER TABLE [dbo].[Сессии]  WITH CHECK ADD  CONSTRAINT [FK_Сессии_Клиенты] FOREIGN KEY([КлиентID])
+REFERENCES [dbo].[Клиенты] ([КлиентID])
+GO
+ALTER TABLE [dbo].[Сессии] CHECK CONSTRAINT [FK_Сессии_Клиенты]
+GO
+ALTER TABLE [dbo].[Сессии]  WITH CHECK ADD  CONSTRAINT [FK_Сессии_Психологи] FOREIGN KEY([ПсихологID])
+REFERENCES [dbo].[Психологи] ([ПсихологID])
+GO
+ALTER TABLE [dbo].[Сессии] CHECK CONSTRAINT [FK_Сессии_Психологи]
+GO
+ALTER TABLE [dbo].[Сессии]  WITH CHECK ADD  CONSTRAINT [FK_Сессии_Услуги] FOREIGN KEY([УслугаID])
+REFERENCES [dbo].[Услуги] ([УслугаID])
+GO
+ALTER TABLE [dbo].[Сессии] CHECK CONSTRAINT [FK_Сессии_Услуги]
+GO
+ALTER TABLE [dbo].[Услуги]  WITH CHECK ADD  CONSTRAINT [FK_Услуги_КатегорииПроблем] FOREIGN KEY([КатегорияID])
+REFERENCES [dbo].[КатегорииПроблем] ([КатегорияID])
+GO
+ALTER TABLE [dbo].[Услуги] CHECK CONSTRAINT [FK_Услуги_КатегорииПроблем]
+GO
+ALTER TABLE [dbo].[Услуги]  WITH CHECK ADD  CONSTRAINT [FK_Услуги_Форматы] FOREIGN KEY([ФорматID])
+REFERENCES [dbo].[Форматы] ([ФорматID])
+GO
+ALTER TABLE [dbo].[Услуги] CHECK CONSTRAINT [FK_Услуги_Форматы]
+GO
+ALTER TABLE [dbo].[Отзывы]  WITH CHECK ADD CHECK  (([Оценка]>=(1) AND [Оценка]<=(5)))
+GO
+/****** Объект:  StoredProcedure [dbo].[usp_ДобавитьСессию]    Дата создания скрипта: 05.10.2026 23:54:33 ******/ 
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Хранимая процедура (рисунок 16). Запись клиента на сессию
+CREATE PROCEDURE [dbo].[usp_ДобавитьСессию]
+    @ПсихологID int,
+    @КлиентID int,
+    @УслугаID int,
+    @ДатаВремя datetime2(7)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM dbo.Сессии WHERE ПсихологID = @ПсихологID AND ДатаВремяСессии = @ДатаВремя)
+    BEGIN
+        RAISERROR(N'У психолога уже есть сессия на это время.',16,1);
+        RETURN;
+    END
+    INSERT INTO dbo.Сессии (ПсихологID, КлиентID, УслугаID, ДатаВремяСессии, СтатусОплаты)
+    VALUES (@ПсихологID, @КлиентID, @УслугаID, @ДатаВремя, 0);
+    SELECT CAST(SCOPE_IDENTITY() AS int) AS СессияID;
+END;
+GO
+USE [master]
+GO
+ALTER DATABASE [КабинетПсихолога] SET  READ_WRITE 
+GO

@@ -1,0 +1,84 @@
+-- скрипт start USE [КабинетПсихолога]; GO
+SET XACT_ABORT ON; SET NOCOUNT ON; GO
+-- 1. Справочники: Форматы, КатегорииПроблем, Специализации IF OBJECT_ID(N'dbo.Форматы','U') IS NULL BEGIN CREATE TABLE dbo.Форматы( ФорматID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, Наименование NVARCHAR(100) NOT NULL ); END GO
+IF OBJECT_ID(N'dbo.КатегорииПроблем','U') IS NULL BEGIN CREATE TABLE dbo.КатегорииПроблем( КатегорияID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, Наименование NVARCHAR(200) NOT NULL, Описание NVARCHAR(MAX) NULL ); CREATE UNIQUE INDEX UQ_КатегорииПроблем_Наименование ON dbo.КатегорииПроблем(Наименование); END GO
+IF OBJECT_ID(N'dbo.Специализации','U') IS NULL BEGIN CREATE TABLE dbo.Специализации( СпециализацияID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, Наименование NVARCHAR(200) NOT NULL, Описание NVARCHAR(MAX) NULL ); CREATE UNIQUE INDEX UQ_Специализации_Наименование ON dbo.Специализации(Наименование); END GO
+-- 2. Основные сущности: Клиенты, Психологи, Услуги, Сессии, Оплаты, Отзывы IF OBJECT_ID(N'dbo.Клиенты','U') IS NULL BEGIN CREATE TABLE dbo.Клиенты( КлиентID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, ФИО NVARCHAR(200) NOT NULL, ДатаРождения DATE NOT NULL, Телефон NVARCHAR(50) NULL, Email NVARCHAR(256) NULL, CONSTRAINT CK_Клиенты_ДатаРождения_Past CHECK (ДатаРождения <= CAST(GETDATE() AS date)) ); END GO
+IF OBJECT_ID(N'dbo.Психологи','U') IS NULL BEGIN CREATE TABLE dbo.Психологи( ПсихологID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, ФИО NVARCHAR(200) NOT NULL, СпециализацияID INT NOT NULL, СтажЛет INT NOT NULL, СтоимостьПриема MONEY NOT NULL, Телефон NVARCHAR(50) NULL, Email NVARCHAR(256) NULL, CONSTRAINT CK_Психологи_СтажNonNegative CHECK (СтажЛет >= 0) ); ALTER TABLE dbo.Психологи ADD CONSTRAINT FK_Психологи_Специализации FOREIGN KEY (СпециализацияID) REFERENCES dbo.Специализации(СпециализацияID); END ELSE BEGIN -- если таблица есть, убедиться, что FK существует IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Психологи') AND referenced_object_id = OBJECT_ID(N'dbo.Специализации')) BEGIN ALTER TABLE dbo.Психологи ADD CONSTRAINT FK_Психологи_Специализации FOREIGN KEY (СпециализацияID) REFERENCES dbo.Специализации(СпециализацияID); END END GO
+IF OBJECT_ID(N'dbo.Услуги','U') IS NULL BEGIN CREATE TABLE dbo.Услуги( УслугаID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, Наименование NVARCHAR(200) NOT NULL, КатегорияID INT NOT NULL, ДлительностьМин INT NOT NULL, Описание NVARCHAR(MAX) NULL, Стоимость MONEY NULL, ФорматID INT NULL ); ALTER TABLE dbo.Услуги ADD CONSTRAINT FK_Услуги_Категории FOREIGN KEY (КатегорияID) REFERENCES dbo.КатегорииПроблем(КатегорияID); ALTER TABLE dbo.Услуги ADD CONSTRAINT FK_Услуги_Форматы FOREIGN KEY (ФорматID) REFERENCES dbo.Форматы(ФорматID); CREATE INDEX IX_Услуги_Наименование ON dbo.Услуги(Наименование); END ELSE BEGIN IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Услуги') AND referenced_object_id = OBJECT_ID(N'dbo.КатегорииПроблем')) ALTER TABLE dbo.Услуги ADD CONSTRAINT FK_Услуги_Категории FOREIGN KEY (КатегорияID) REFERENCES dbo.КатегорииПроблем(КатегорияID); IF COL_LENGTH('dbo.Услуги','ФорматID') IS NULL ALTER TABLE dbo.Услуги ADD ФорматID INT NULL; IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Услуги') AND referenced_object_id = OBJECT_ID(N'dbo.Форматы')) ALTER TABLE dbo.Услуги ADD CONSTRAINT FK_Услуги_Форматы FOREIGN KEY (ФорматID) REFERENCES dbo.Форматы(ФорматID); IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Услуги') AND name = N'IX_Услуги_Наименование') CREATE INDEX IX_Услуги_Наименование ON dbo.Услуги(Наименование); END GO
+IF OBJECT_ID(N'dbo.Сессии','U') IS NULL BEGIN CREATE TABLE dbo.Сессии( СессияID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, ПсихологID INT NOT NULL, КлиентID INT NOT NULL, УслугаID INT NOT NULL, ДатаВремяСессии DATETIME2(7) NOT NULL, СтатусОплаты BIT NOT NULL CONSTRAINT DF_Сессии_Статус DEFAULT (0) ); ALTER TABLE dbo.Сессии ADD CONSTRAINT FK_Сессии_Психологи FOREIGN KEY (ПсихологID) REFERENCES dbo.Психологи(ПсихологID); ALTER TABLE dbo.Сессии ADD CONSTRAINT FK_Сессии_Клиенты FOREIGN KEY (КлиентID) REFERENCES dbo.Клиенты(КлиентID); ALTER TABLE dbo.Сессии ADD CONSTRAINT FK_Сессии_Услуги FOREIGN KEY (УслугаID) REFERENCES dbo.Услуги(УслугаID); -- запрет двойной записи у одного психолога в одно и то же время CREATE UNIQUE INDEX UQ_Сессии_Психолог_Время ON dbo.Сессии(ПсихологID, ДатаВремяСессии); END ELSE BEGIN IF COL_LENGTH('dbo.Сессии','СтатусОплаты') IS NULL ALTER TABLE dbo.Сессии ADD СтатусОплаты BIT NOT NULL CONSTRAINT DF_Сессии_Статус DEFAULT (0); IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Сессии') AND referenced_object_id = OBJECT_ID(N'dbo.Психологи')) ALTER TABLE dbo.Сессии ADD CONSTRAINT FK_Сессии_Психологи FOREIGN KEY (ПсихологID) REFERENCES dbo.Психологи(ПсихологID); IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Сессии') AND referenced_object_id = OBJECT_ID(N'dbo.Клиенты')) ALTER TABLE dbo.Сессии ADD CONSTRAINT FK_Сессии_Клиенты FOREIGN KEY (КлиентID) REFERENCES dbo.Клиенты(КлиентID); IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Сессии') AND referenced_object_id = OBJECT_ID(N'dbo.Услуги')) ALTER TABLE dbo.Сессии ADD CONSTRAINT FK_Сессии_Услуги FOREIGN KEY (УслугаID) REFERENCES dbo.Услуги(УслугаID); IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Сессии') AND name = N'UQ_Сессии_Психолог_Время') CREATE UNIQUE INDEX UQ_Сессии_Психолог_Время ON dbo.Сессии(ПсихологID, ДатаВремяСессии); END GO
+IF OBJECT_ID(N'dbo.Оплаты','U') IS NULL BEGIN CREATE TABLE dbo.Оплаты( ПлатежID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, СессияID INT NOT NULL, Сумма MONEY NOT NULL, ДатаПлатежа DATETIME2(7) NOT NULL, Метод NVARCHAR(100) NULL ); ALTER TABLE dbo.Оплаты ADD CONSTRAINT FK_Оплаты_Сессии FOREIGN KEY (СессияID) REFERENCES dbo.Сессии(СессияID); END ELSE BEGIN IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID(N'dbo.Оплаты') AND referenced_object_id = OBJECT_ID(N'dbo.Сессии')) ALTER TABLE dbo.Оплаты ADD CONSTRAINT FK_Оплаты_Сессии FOREIGN KEY (СессияID) REFERENCES dbo.Сессии(СессияID); END GO
+IF OBJECT_ID(N'dbo.Отзывы','U') IS NULL BEGIN CREATE TABLE dbo.Отзывы( ОтзывID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, КлиентID INT NOT NULL, ПсихологID INT NOT NULL, УслугаID INT NULL, Оценка TINYINT NOT NULL CHECK (Оценка BETWEEN 1 AND 5), Текст NVARCHAR(MAX) NULL, Дата DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME() ); ALTER TABLE dbo.Отзывы ADD CONSTRAINT FK_Отзывы_Клиенты FOREIGN KEY (КлиентID) REFERENCES dbo.Клиенты(КлиентID); ALTER TABLE dbo.Отзывы ADD CONSTRAINT FK_Отзывы_Психологи FOREIGN KEY (ПсихологID) REFERENCES dbo.Психологи(ПсихологID); ALTER TABLE dbo.Отзывы ADD CONSTRAINT FK_Отзывы_Услуги FOREIGN KEY (УслугаID) REFERENCES dbo.Услуги(УслугаID); END GO
+-- 3. Журнал аудита IF OBJECT_ID(N'dbo.АудитСессий','U') IS NULL BEGIN CREATE TABLE dbo.АудитСессий( AuditID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, Операция NVARCHAR(10) NOT NULL, -- INSERT/UPDATE/DELETE СессияID INT NULL, СтарыйСтатус BIT NULL, НовыйСтатус BIT NULL, СтараяДатаВремя DATETIME2(7) NULL, НоваяДатаВремя DATETIME2(7) NULL, Пользователь SYSNAME NULL, ДатаВремяОперации DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME() ); END GO
+-- 4. Процедуры и представления CREATE OR ALTER PROCEDURE dbo.usp_ДобавитьСессию @ПсихологID INT, @КлиентID INT, @УслугаID INT, @ДатаВремя DATETIME2(7) AS BEGIN SET NOCOUNT ON; BEGIN TRY IF EXISTS (SELECT 1 FROM dbo.Сессии WHERE ПсихологID = @ПсихологID AND ДатаВремяСессии = @ДатаВремя) THROW 50001, N'У психолога уже есть сессия на это время.', 1;
+    INSERT INTO dbo.Сессии (ПсихологID, КлиентID, УслугаID, ДатаВремяСессии, СтатусОплаты)
+    VALUES (@ПсихологID, @КлиентID, @УслугаID, @ДатаВремя, 0);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS СессияID;
+END TRY
+BEGIN CATCH
+    DECLARE @msg NVARCHAR(4000) = ERROR_MESSAGE();
+    RAISERROR(@msg, 16, 1);
+END CATCH
+END GO
+CREATE OR ALTER VIEW dbo.vw_РасписаниеСессий AS SELECT s.СессияID, p.ФИО AS Психолог, c.ФИО AS Клиент, u.Наименование AS Услуга, s.ДатаВремяСессии, s.СтатусОплаты FROM dbo.Сессии s JOIN dbo.Психологи p ON s.ПсихологID = p.ПсихологID JOIN dbo.Клиенты c ON s.КлиентID = c.КлиентID LEFT JOIN dbo.Услуги u ON s.УслугаID = u.УслугаID; GO
+CREATE OR ALTER VIEW dbo.vw_ДолгиКлиентов AS SELECT c.КлиентID, c.ФИО, COUNT(s.СессияID) AS НеоплаченныхСессий, SUM(COALESCE(u.Стоимость, p.СтоимостьПриема, 0)) AS СуммаДолга FROM dbo.Сессии s JOIN dbo.Клиенты c ON s.КлиентID = c.КлиентID LEFT JOIN dbo.Услуги u ON s.УслугаID = u.УслугаID LEFT JOIN dbo.Психологи p ON s.ПсихологID = p.ПсихологID WHERE s.СтатусОплаты = 0 GROUP BY c.КлиентID, c.ФИО; GO
+-- 5. Триггеры: аудит сессий и обновление статуса по оплатам CREATE OR ALTER TRIGGER dbo.trg_Сессии_Аудит ON dbo.Сессии AFTER INSERT, UPDATE, DELETE AS BEGIN SET NOCOUNT ON;
+-- INSERT: подставляем старое = вставленному, чтобы не было NULL (по вашему требованию)
+INSERT INTO dbo.АудитСессий (Операция, СессияID, СтарыйСтатус, НовыйСтатус, СтараяДатаВремя, НоваяДатаВремя, Пользователь, ДатаВремяОперации)
+SELECT N'INSERT', i.СессияID,
+       COALESCE(i.СтатусОплаты, 0),
+       COALESCE(i.СтатусОплаты, 0),
+       COALESCE(i.ДатаВремяСессии, '1900-01-01'),
+       i.ДатаВремяСессии,
+       SUSER_SNAME(), SYSUTCDATETIME()
+FROM inserted i
+LEFT JOIN deleted d ON d.СессияID = i.СессияID
+WHERE d.СессияID IS NULL;
+
+-- UPDATE
+INSERT INTO dbo.АудитСессий (Операция, СессияID, СтарыйСтатус, НовыйСтатус, СтараяДатаВремя, НоваяДатаВремя, Пользователь, ДатаВремяОперации)
+SELECT N'UPDATE', i.СессияID,
+       COALESCE(d.СтатусОплаты, i.СтатусОплаты, 0),
+       COALESCE(i.СтатусОплаты, 0),
+       COALESCE(d.ДатаВремяСессии, i.ДатаВремяСессии, '1900-01-01'),
+       COALESCE(i.ДатаВремяСессии, '1900-01-01'),
+       SUSER_SNAME(), SYSUTCDATETIME()
+FROM inserted i
+INNER JOIN deleted d ON d.СессияID = i.СессияID;
+
+-- DELETE
+INSERT INTO dbo.АудитСессий (Операция, СессияID, СтарыйСтатус, СтараяДатаВремя, Пользователь, ДатаВремяОперации)
+SELECT N'DELETE', d.СессияID,
+       COALESCE(d.СтатусОплаты, 0),
+       COALESCE(d.ДатаВремяСессии, '1900-01-01'),
+       SUSER_SNAME(), SYSUTCDATETIME()
+FROM deleted d
+LEFT JOIN inserted i ON i.СессияID = d.СессияID
+WHERE i.СессияID IS NULL;
+
+END GO
+-- Триггер: после вставки оплат обновлять статус CREATE OR ALTER TRIGGER dbo.trg_Оплаты_ОбновитьСтатус ON dbo.Оплаты AFTER INSERT AS BEGIN SET NOCOUNT ON;
+;WITH ChangedSessions AS (
+  SELECT DISTINCT СессияID FROM inserted WHERE СессияID IS NOT NULL
+)
+UPDATE s
+SET СтатусОплаты = CASE WHEN paid.TotalPaid >= due.DueAmount AND due.DueAmount > 0 THEN 1 ELSE 0 END
+FROM dbo.Сессии s
+INNER JOIN ChangedSessions ch ON s.СессияID = ch.СессияID
+CROSS APPLY (SELECT ISNULL(SUM(o.Сумма),0) AS TotalPaid FROM dbo.Оплаты o WHERE o.СессияID = ch.СессияID) paid
+CROSS APPLY (SELECT TOP(1) COALESCE(u.Стоимость, p.СтоимостьПриема, 0) AS DueAmount
+             FROM dbo.Сессии ss
+             LEFT JOIN dbo.Услуги u ON ss.УслугаID = u.УслугаID
+             LEFT JOIN dbo.Психологи p ON ss.ПсихологID = p.ПсихологID
+             WHERE ss.СессияID = ch.СессияID) due;
+END GO
+-- 6. Роли и права (db-level). НЕ создаёт логины на сервере. IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'role_admin' AND type = 'R') EXEC('CREATE ROLE [role_admin]'); IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'role_psychologist' AND type = 'R') EXEC('CREATE ROLE [role_psychologist]'); GO
+-- Гранты ролям (проверять существование объектов) GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMAdbo TO [role_admin]; GRANT EXECUTE ON SCHEMAdbo TO [role_admin]; GRANT SELECT ON SCHEMAdbo TO [role_psychologist]; GRANT INSERT, UPDATE ON OBJECTdbo.Сессии TO [role_psychologist]; GRANT INSERT, UPDATE ON OBJECTdbo.Клиенты TO [role_psychologist]; IF OBJECT_ID(N'dbo.usp_ДобавитьСессию','P') IS NOT NULL GRANT EXECUTE ON OBJECTdbo.usp_ДобавитьСессию TO [role_psychologist]; GO
+-- 7. Создать database users для существующих логинов (только если логин уже на сервере) IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'AdminUser') IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'AdminUser') CREATE USER [AdminUser] FOR LOGIN [AdminUser]; IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'PsyUser') IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'PsyUser') CREATE USER [PsyUser] FOR LOGIN [PsyUser]; GO
+-- Добавление пользователей в роли (если они существуют) IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'AdminUser') IF NOT EXISTS (SELECT 1 FROM sys.database_role_members drm JOIN sys.database_principals r ON drm.role_principal_id=r.principal_id JOIN sys.database_principals m ON drm.member_principal_id=m.principal_id WHERE r.name=N'role_admin' AND m.name=N'AdminUser') ALTER ROLE [role_admin] ADD MEMBER [AdminUser];
+IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'PsyUser') IF NOT EXISTS (SELECT 1 FROM sys.database_role_members drm JOIN sys.database_principals r ON drm.role_principal_id=r.principal_id JOIN sys.database_principals m ON drm.member_principal_id=m.principal_id WHERE r.name=N'role_psychologist' AND m.name=N'PsyUser') ALTER ROLE [role_psychologist] ADD MEMBER [PsyUser]; GO
+-- 8. Примеры данных (опционально) — вставляются только если нет IF NOT EXISTS (SELECT 1 FROM dbo.Форматы WHERE Наименование = N'Офлайн') INSERT dbo.Форматы(Наименование) VALUES (N'Офлайн'); IF NOT EXISTS (SELECT 1 FROM dbo.Форматы WHERE Наименование = N'Онлайн') INSERT dbo.Форматы(Наименование) VALUES (N'Онлайн'); GO
+-- Пример: вставка тестовых данных можно добавить по аналогии ниже, обёрнуть в IF NOT EXISTS -- ... (опционально)
+-- 9. Примечания по диаграммам базы -- Диаграммы базы данных — это объект SSMS (схема: dbo.sysdiagrams). Скрипт корректно создаёт объекты схемы, -- но визуальные диаграммы создаются и редактируются в SSMS: Database Diagrams -> New Database Diagram. -- Если нужно экспортировать/восстановить диаграммы, используйте SSMS GUI или скриптирование объектов sysdiagrams с осторожностью.
+-- Конец скрипта PRINT N'Скрипт обновления схемы выполнен. Проверьте сообщения и логи на предмет ошибок.'; GO
